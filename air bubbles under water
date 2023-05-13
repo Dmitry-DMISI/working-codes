@@ -1,0 +1,121 @@
+import pygame
+import random
+import math
+
+pygame.init()
+
+screen_width = 1000
+screen_height = 800
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("air bubbles under water")
+
+white = (255, 255, 255)
+black = (0, 0, 0)
+red = (255, 0, 0)
+blue = (0, 0, 255)
+green = (0, 255, 0)
+
+r_1 = random.randint(100, 255)
+r_2 = random.randint(110, 255)
+r_3 = random.randint(120, 255)
+r_4 = random.randint(130, 255)
+r_5 = random.randint(140, 255)
+r_6 = random.randint(150, 255)
+r_7 = random.randint(160, 255)
+r_8 = random.randint(170, 255)
+r_9 = random.randint(180, 255)
+r_10 = random.randint(190, 255)
+
+
+def reset_game():
+    all_sprites.empty()
+    create_balloons(10)
+
+
+class Balloon(pygame.sprite.Sprite):
+    def __init__(self, color, radius, speed):
+        super().__init__()
+        self.image = pygame.Surface((radius * 2, radius * 2))
+        self.image.fill((100, 100, 225))
+        pygame.draw.circle(self.image, color, (radius, radius), radius)
+        self.rect = self.image.get_rect()
+        self.speed = speed
+
+    def update(self):
+        self.rect.y -= self.speed
+        if self.rect.y < -self.rect.height:
+            self.kill()
+            balloons = [b for b in all_sprites if isinstance(b, Balloon) and b is not self]
+            for ball in balloons:
+                dist = math.hypot(self.rect.centerx - ball.rect.centerx, self.rect.centery - ball.rect.centery)
+                if dist < self.rect.width + ball.rect.width:
+                    self.rect.y += ball.rect.width
+                    break
+
+
+all_sprites = pygame.sprite.Group()
+
+
+def create_balloons(num_balloons):
+    colors = [r_1, r_2, r_3, r_4, r_5, r_6, r_7, r_8, r_9, r_10]
+    for i in range(num_balloons):
+        color = random.choice(colors)
+        radius = random.randint(10, 60)
+        speed = random.randint(1, 2)
+        balloon = Balloon(color, radius, speed)
+        balloon.rect.x = random.randint(0, screen_width - radius * 2)
+        balloon.rect.y = random.randint(screen_height, screen_height + 10)
+        all_sprites.add(balloon)
+
+
+def text_objects(text, font):
+    text_surface = font.render(text, True, (255, 255, 255))
+    return text_surface, text_surface.get_rect()
+
+
+def message_display(text):
+    large_text = pygame.font.Font('freesansbold.ttf', 50)
+    text_surf, text_rect = text_objects(text, large_text)
+    text_rect.center = (screen_width / 2, screen_height / 2)
+    screen.blit(text_surf, text_rect)
+    pygame.display.update()
+    pygame.time.wait(3000)
+
+
+def game_loop():
+    game_exit = False
+    game_over = False
+
+    create_balloons(10)
+
+    while not game_exit:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_exit = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    game_exit = True
+                elif event.key == pygame.K_SPACE:
+                    pygame.display.update()
+                    create_balloons(10)
+
+        all_sprites.update()
+
+        screen.fill((100, 100, 225))
+        all_sprites.draw(screen)
+
+        if not all_sprites:
+            game_over = True
+
+        if game_over:
+            message_display("Please wait while the app is reloading")
+            reset_game()
+            game_over = False
+
+        pygame.display.update()
+
+    pygame.quit()
+    quit()
+
+
+game_loop()
